@@ -743,7 +743,9 @@ sub clear_problem_cache {
 }
 
 sub prepare_problem {
-    my $r = $judge->select_request or return;
+    my $r = $judge->select_request;
+    log_msg("pong\n") if $judge->was_pinged;
+    return unless $r;
 
     $log->clear_dump;
 
@@ -873,10 +875,8 @@ sub main_loop {
     for (my $i = 0; ; $i++) {
         sleep $cfg->sleep_time;
         $log->rollover;
-        log_msg("pong\n") if $judge->update_state;
         log_msg("...\n") if $i % 5 == 0;
-        next if $judge->is_locked;
-        my ($r, $state) = prepare_problem();
+        my ($r, $state) = prepare_problem() or next;
         test_problem($r) if $r && $state != $cats::st_unhandled_error;
     }
 }
